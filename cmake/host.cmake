@@ -11,6 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if ("${_cmake_compiler_output}" MATCHES "[Ee]mscripten")
+    set(PROTOC_PRG protoc)
+    return()
+endif ()
+
 if(NOT CMAKE_CROSSCOMPILING)
   set(PROTOC_PRG protobuf::protoc)
   return()
