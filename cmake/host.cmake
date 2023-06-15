@@ -11,15 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if ("${_cmake_compiler_output}" MATCHES "[Ee]mscripten")
-    set(PROTOC_PRG /usr/local/bin/protoc)
-    return()
-endif ()
+#if(NOT CMAKE_CROSSCOMPILING)
+#  set(PROTOC_PRG protobuf::protoc)
+#  return()
+#endif()
 
-if(NOT CMAKE_CROSSCOMPILING)
-  set(PROTOC_PRG protobuf::protoc)
-  return()
-endif()
+cmake_policy(SET CMP0079 NEW)
 
 message(STATUS "Subproject: HostTools...")
 
@@ -47,28 +44,48 @@ message(STATUS "Subproject: HostTools...")
 #  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/host_tools)
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/host.CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/emscripten.CMakeLists.txt
   ${CMAKE_CURRENT_BINARY_DIR}/host_tools/CMakeLists.txt
   COPYONLY)
 
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/host_tools
-  #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/host.CMakeLists.txt CMakeLists.txt
-  COMMAND ${CMAKE_COMMAND} -E remove_directory build
-  COMMAND ${CMAKE_COMMAND} -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY:PATH=${CMAKE_CURRENT_BINARY_DIR}/host_tools/bin
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -S. -Bbuild -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -G "${CMAKE_GENERATOR}" .
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host_tools)
+if(result)
+  message(FATAL_ERROR "CMake step for host tools failed: ${result}")
+endif()
+execute_process(
   COMMAND ${CMAKE_COMMAND} --build build --config Release -v
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host_tools
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host_tools)
+if(result)
+  message(FATAL_ERROR "Build step for host tools failed: ${result}")
+endif()
+
+# add_custom_command(
+#   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/host_tools
+#   #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/host.CMakeLists.txt CMakeLists.txt
+#   COMMAND ${CMAKE_COMMAND} -E remove_directory build
+#   COMMAND ${CMAKE_COMMAND} -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY:PATH=${CMAKE_CURRENT_BINARY_DIR}/host_tools/bin
+#   COMMAND ${CMAKE_COMMAND} --build build --config Release -v
+#   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host_tools
+# )
+#
+# add_custom_target(host_tools
+#   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/host_tools
+#   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+#
+# add_executable(host_protoc IMPORTED GLOBAL)
+# set_target_properties(host_protoc PROPERTIES
+#     IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/host_tools/bin/protoc)
+#
+# add_dependencies(host_protoc host_tools)
+add_subdirectory(
+        ${CMAKE_CURRENT_BINARY_DIR}/host_tools/build/_deps/protobuf-src
+        ${CMAKE_CURRENT_BINARY_DIR}/host_tools/build/_deps/protobuf-build
 )
 
-add_custom_target(host_tools
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/host_tools
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
-add_executable(host_protoc IMPORTED GLOBAL)
-set_target_properties(host_protoc PROPERTIES
-  IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/host_tools/bin/protoc)
-
-add_dependencies(host_protoc host_tools)
 set(PROTOC_PRG host_protoc)
 
 message(STATUS "Subproject: HostTools...DONE")
