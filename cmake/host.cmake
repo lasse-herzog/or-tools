@@ -72,19 +72,15 @@ endif()
 #   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host_tools
 # )
 #
-# add_custom_target(host_tools
-#   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/host_tools
-#   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-#
-# add_executable(host_protoc IMPORTED GLOBAL)
-# set_target_properties(host_protoc PROPERTIES
-#     IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/host_tools/bin/protoc)
-#
-# add_dependencies(host_protoc host_tools)
-add_subdirectory(
-        ${CMAKE_CURRENT_BINARY_DIR}/host_tools/build/_deps/protobuf-src
-        ${CMAKE_CURRENT_BINARY_DIR}/host_tools/build/_deps/protobuf-build
-)
+add_custom_target(host_tools
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/host_tools
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+add_executable(host_protoc IMPORTED GLOBAL)
+set_target_properties(host_protoc PROPERTIES
+  IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/host_tools/bin/protoc)
+
+add_dependencies(host_protoc host_tools)
 
 set(PROTOC_PRG host_protoc)
 
