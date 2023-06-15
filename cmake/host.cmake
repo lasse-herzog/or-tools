@@ -12,7 +12,7 @@
 # limitations under the License.
 
 if ("${_cmake_compiler_output}" MATCHES "[Ee]mscripten")
-    set(PROTOC_PRG protoc)
+    set(PROTOC_PRG /usr/local/bin/protoc)
     return()
 endif ()
 
